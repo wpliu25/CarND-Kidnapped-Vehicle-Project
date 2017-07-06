@@ -148,6 +148,19 @@ void ParticleFilter::resample() {
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
+    discrete_distribution<int> discrete_weight_dist(weights.begin(), weights.end());
+
+    std::vector<Particle> weighted_sample;
+
+    Particle p;
+    for(size_t i = 0; i < num_particles; i++)
+    {
+        int j = discrete_weight_dist(gen);
+        weighted_sample.push_back(particles[j]);
+    }
+
+    particles = weighted_sample;
+
 }
 
 Particle ParticleFilter::SetAssociations(Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y)
