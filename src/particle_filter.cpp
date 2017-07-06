@@ -18,12 +18,39 @@
 #include "particle_filter.h"
 
 using namespace std;
+static default_random_engine gen;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
+
+    //set initialization to false:
+    is_initialized = false;
+
+    //set num_particles to 100:
+    num_particles = 100;
+
+    // Create a normal (Gaussian) distribution for x, y, theta
+    normal_distribution<double> dist_x(x, std[0]);
+    normal_distribution<double> dist_y(y, std[1]);
+    normal_distribution<double> dist_theta(theta, std[2]);
+
+    // initialize particles
+    for(size_t i=0; i< num_particles; i++)
+    {
+        Particle p;
+        p.id = int(i);
+        p.weight = 1.0;
+        p.x = dist_x(gen);
+        p.y = dist_y(gen);
+        p.theta = dist_theta(gen);
+        particles.push_back(p);
+    }
+
+    //set initialization to true:
+    is_initialized = true;
 
 }
 
@@ -32,6 +59,25 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
+
+    // for each particle
+    Particle p;
+    for(size_t i=0; i < particles.size(); i++)
+    {
+        p = particles[i];
+
+        // yaw_rate is changing
+        if(fabs(yaw_rate) > 1e-5)
+        {
+
+        // yaw_rate is constant
+        }else
+        {
+            p.x += velocity*delta_t*cos(p.theta);
+            p.y += velocity*delta_t*sin(p.theta);
+        }
+
+    }
 
 }
 
@@ -54,7 +100,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
 	//   and the following is a good resource for the actual equation to implement (look at equation 
 	//   3.33
-	//   http://planning.cs.uiuc.edu/node99.html
+    //   http://planning.cs.uiuc.edu/node99.html
 }
 
 void ParticleFilter::resample() {

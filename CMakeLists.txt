@@ -18,7 +18,12 @@ link_directories(/usr/local/lib)
 link_directories(/usr/local/opt/openssl/lib)
 link_directories(/usr/local/Cellar/libuv/1.11.0/lib)
 
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+if(UNIX)
+    include_directories(/devsystem/dependencies/ubuntu16/openssl/libopenssl-1.1.0e_x86_64/include)
+    link_directories(/devsystem/dependencies/ubuntu16/openssl/libopenssl-1.1.0e_x86_64/lib)
+endif(UNIX)
 
 
 add_executable(particle_filter ${sources})
