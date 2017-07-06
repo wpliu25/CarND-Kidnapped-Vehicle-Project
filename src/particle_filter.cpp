@@ -47,6 +47,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
         p.y = dist_y(gen);
         p.theta = dist_theta(gen);
         particles.push_back(p);
+        weights.push_back(p.weight);
     }
 
     //set initialization to true:
@@ -66,9 +67,12 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
     {
         p = particles[i];
 
-        // yaw_rate is changing
+        // yaw_rate is not constant
         if(fabs(yaw_rate) > 1e-5)
         {
+            p.x += velocity/yaw_rate*(sin(p.theta+yaw_rate*delta_t)-sin(p.theta));
+            p.y += velocity/yaw_rate*(cos(p.theta)-cos(p.theta+yaw_rate*delta_t));
+            p.theta += yaw_rate*delta_t;
 
         // yaw_rate is constant
         }else
@@ -76,6 +80,16 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
             p.x += velocity*delta_t*cos(p.theta);
             p.y += velocity*delta_t*sin(p.theta);
         }
+
+
+        // Create a normal (Gaussian) distribution for x, y, theta
+        normal_distribution<double> dist_x(p.x, std_pos[0]);
+        normal_distribution<double> dist_y(p.y, std_pos[1]);
+        normal_distribution<double> dist_theta(p.theta, std_pos[2]);
+
+        p.x = dist_x(gen);
+        p.y = dist_y(gen);
+        p.theta = dist_theta(gen);
 
     }
 
@@ -87,6 +101,25 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
 
+    LandmarkObs obj, pred;
+    double distance;
+    double min_dist = numeric_limits<double>::max();
+    for(size_t i=0; i < observations.size(); i++)
+    {
+        obj = observations[i];
+
+        for(size_t j=0; j < predicted.size(); j++)
+        {
+            pred = predicted[j];
+            distance = dist(obj.x, obj.y, pred.x, pred.y);
+            if(distance < min_dist)
+            {
+                obj.id = pred.id;
+                min_dist = distance;
+            }
+
+        }
+    }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
@@ -101,6 +134,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   and the following is a good resource for the actual equation to implement (look at equation 
 	//   3.33
     //   http://planning.cs.uiuc.edu/node99.html
+
+    Particle p;
+    for(size_t i=0; i < particles.size(); i++)
+    {
+        p = particles[i];
+        weights[i] = p.weight;
+    }
 }
 
 void ParticleFilter::resample() {
