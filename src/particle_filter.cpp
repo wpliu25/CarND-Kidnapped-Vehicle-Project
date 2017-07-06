@@ -136,10 +136,57 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     //   http://planning.cs.uiuc.edu/node99.html
 
     Particle p;
+    LandmarkObs obj, tmp_landmark;
+    double dx = 0;
+    double dy = 0;
+    double probability = 1;
     for(size_t i=0; i < particles.size(); i++)
     {
         p = particles[i];
+
+        std::vector<LandmarkObs> map_observations;
+        // transform all observations from vehicle coordinate system to MAP coordinate system
+        for(size_t i=0; i < observations.size(); i++)
+        {
+            obj = observations[i];
+            LandmarkObs map_observation;
+            map_observation.x = p.x + obj.x * cos(p.theta) - obj.y * sin(p.theta);
+            map_observation.y = p.y + obj.x * sin(p.theta) + obj.y * cos(p.theta);
+            map_observation.id = obj.id;
+
+            map_observations.push_back(map_observation);
+        }
+
+        // find all landmarks within sensor range
+        std::vector<LandmarkObs> in_range_landmarks;
+
+        for (auto landmark: map_landmarks.landmark_list){
+
+            double distance = dist(p.x,p.y,landmark.x_f,landmark.y_f);
+            if (distance < sensor_range) {
+                tmp_landmark.id = landmark.id_i;
+                tmp_landmark.x = landmark.x_f;
+                tmp_landmark.y = landmark.y_f;
+                in_range_landmarks.push_back(tmp_landmark);
+            }
+        }
+
+
+        // call dataAssociation to find predicted landmark that is closest to observed
+        dataAssociation(in_range_landmarks, map_observations);
+
+        // calculate probability
+        probability = 1;
+        for (int j=0; j < in_range_landmarks.size(); ++j){
+            dx = map_observations.at(j).x - in_range_landmarks.at(j).x;
+            dy = map_observations.at(j).y - in_range_landmarks.at(j).y;
+            probability *= 1.0/(2*M_PI*std_landmark[0]*std_landmark[1]) * exp(-dx*dx / (2*std_landmark[0]*std_landmark[0]))* exp(-dy*dy / (2*std_landmark[1]*std_landmark[1]));
+        }
+
+        // update weights
+        p.weight = probability;
         weights[i] = p.weight;
+
     }
 }
 
