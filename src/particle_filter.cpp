@@ -71,7 +71,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
             p.y += velocity/yaw_rate*(cos(p.theta)-cos(p.theta+yaw_rate*delta_t));
             p.theta += yaw_rate*delta_t;
 
-            // yaw_rate is constant
+        // yaw_rate is constant
         }else
         {
             p.x += velocity*delta_t*cos(p.theta);
@@ -131,8 +131,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     //   http://planning.cs.uiuc.edu/node99.html
 
     LandmarkObs tmp_landmark;
-    for(auto& p: particles)
+    for(size_t i = 0; i< particles.size(); ++i)
     {
+        Particle p = particles[i];
         std::vector<LandmarkObs> map_observations;
         // transform all observations from vehicle coordinate system to MAP coordinate system
         for(auto& obj: observations)
@@ -173,6 +174,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
         // update weights
         p.weight = probability;
+        weights[i] = probability;
 
     }
 }
