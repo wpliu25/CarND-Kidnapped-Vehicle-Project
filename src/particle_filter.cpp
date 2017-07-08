@@ -71,7 +71,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
             p.y += velocity/yaw_rate*(cos(p.theta)-cos(p.theta+yaw_rate*delta_t));
             p.theta += yaw_rate*delta_t;
 
-        // yaw_rate is constant
+            // yaw_rate is constant
         }else
         {
             p.x += velocity*delta_t*cos(p.theta);
@@ -101,24 +101,29 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
     double distance;
     double min_dist;
     LandmarkObs min_obs;
+
+    // for each observation
     for(auto& obs: observations)
     {
         min_dist = numeric_limits<double>::max();
+        // for each predicted
         for(auto& pred: predicted)
         {
             distance = dist(obs.x, obs.y, pred.x, pred.y);
+            //find closest
             if(distance < min_dist)
             {
                 min_obs = pred;
                 min_dist = distance;
             }
         }
+        // save
         obs = min_obs;
     }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
-        std::vector<LandmarkObs> observations, Map map_landmarks) {
+                                   std::vector<LandmarkObs> observations, Map map_landmarks) {
     // TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
     //   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
     // NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
