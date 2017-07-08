@@ -103,10 +103,11 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 
     LandmarkObs obj, pred;
     double distance;
-    double min_dist = numeric_limits<double>::max();
+    double min_dist;
     for(size_t i=0; i < observations.size(); i++)
     {
         obj = observations[i];
+        min_dist = numeric_limits<double>::max();
 
         for(size_t j=0; j < predicted.size(); j++)
         {
@@ -122,24 +123,21 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
     }
 }
 
-void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
-		std::vector<LandmarkObs> observations, Map map_landmarks) {
-	// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
-	//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-	// NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
-	//   according to the MAP'S coordinate system. You will need to transform between the two systems.
-	//   Keep in mind that this transformation requires both rotation AND translation (but no scaling).
-	//   The following is a good resource for the theory:
-	//   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
-	//   and the following is a good resource for the actual equation to implement (look at equation 
-	//   3.33
+void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
+        std::vector<LandmarkObs> observations, Map map_landmarks) {
+    // TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
+    //   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
+    // NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
+    //   according to the MAP'S coordinate system. You will need to transform between the two systems.
+    //   Keep in mind that this transformation requires both rotation AND translation (but no scaling).
+    //   The following is a good resource for the theory:
+    //   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
+    //   and the following is a good resource for the actual equation to implement (look at equation
+    //   3.33
     //   http://planning.cs.uiuc.edu/node99.html
 
     Particle p;
     LandmarkObs obj, tmp_landmark;
-    double dx = 0;
-    double dy = 0;
-    double probability = 1;
     for(size_t i=0; i < particles.size(); i++)
     {
         p = particles[i];
@@ -171,15 +169,14 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             }
         }
 
-
         // call dataAssociation to find predicted landmark that is closest to observed
         dataAssociation(in_range_landmarks, map_observations);
 
         // calculate probability
-        probability = 1;
+        double probability = 1;
         for (int j=0; j < in_range_landmarks.size(); ++j){
-            dx = map_observations.at(j).x - in_range_landmarks.at(j).x;
-            dy = map_observations.at(j).y - in_range_landmarks.at(j).y;
+            double dx = map_observations.at(j).x - in_range_landmarks.at(j).x;
+            double dy = map_observations.at(j).y - in_range_landmarks.at(j).y;
             probability *= 1.0/(2*M_PI*std_landmark[0]*std_landmark[1]) * exp(-dx*dx / (2*std_landmark[0]*std_landmark[0]))* exp(-dy*dy / (2*std_landmark[1]*std_landmark[1]));
         }
 
@@ -193,7 +190,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 void ParticleFilter::resample() {
 	// TODO: Resample particles with replacement with probability proportional to their weight. 
 	// NOTE: You may find std::discrete_distribution helpful here.
-	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
+    //   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
     discrete_distribution<int> discrete_weight_dist(weights.begin(), weights.end());
 
